@@ -1,31 +1,62 @@
+const { ADMIN_ROLES } = require("../../BusinessLayer/enums/admin-roles");
+const { ADMIN_STATUS } = require("../../BusinessLayer/enums/admin-status");
 const Admin = require("../models/Admin");
 
 
 // Function have an argument with properties and return a new format
 const toDTO = ({
-    _id, name, email, password, status
+    _id, name, email, password, status, role
 }) => {
     return {
         id: _id.toString(),
         name,
         email,
         password,
-        status
+        status,
+        role
     }
 }
-const createAdmin = async(data) => {
+const createSuperAdminRepo = async(data) => {
     const admin = await Admin.create(data);
     return toDTO (admin);
 }
 
-const updateAdmin = async(id, data) => {
-    const admin = await Admin.findByIdAndUpdate(id, data, {new: true});
-    return admin ? toDTO (admin) : null;
+const loginSuperAdminRepo = async (email, password) => {
+    const superAdmin = await Admin.findOne({
+        email: email,
+        role: ADMIN_ROLES.SUPER_ADMIN,
+        status: ADMIN_STATUS.ACTIVE,
+    })
+    if (!superAdmin) {
+        return null;
+    }
+    return toDTO(superAdmin);
 }
-const retrieveAdmin = async(id) => {
-    const admin = await Admin.findById(id);
-    return admin ? toDTO (admin) : null;
+
+const addAdminRepo = async(data) => {
+    const admin = await Admin.create(data);
+    return toDTO (admin);
 }
+
+
+const retrieveAdminRepo = async (filter) => {
+    const admin = await Admin.findOne(filter);
+    return admin ? admin : null;
+}
+
+
+const resetAdminDataRepo = async (email, data) => {
+    const admin = await Admin.findOneAndUpdate({ email }, data, { new: true });
+    if (!admin) {
+      return null;
+    }
+    console.log("ttttttttttttttttttttttttttttttttttttttttttt");
+    return admin;
+  };
+  
+
+
+
 
 // const retrieveAdmins = async (filter, pagination) => {
 //     const admins = await Admin.find(filter)
@@ -36,7 +67,9 @@ const retrieveAdmin = async(id) => {
 // };
 
 module.exports = {
-    createAdmin,
-    updateAdmin,
-    retrieveAdmin,
+    createSuperAdminRepo,
+    loginSuperAdminRepo,
+    addAdminRepo,
+    retrieveAdminRepo,
+    resetAdminDataRepo
 }

@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const { v4: uuidv4 } = require('uuid');
 const { ADMIN_STATUS } = require("../../BusinessLayer/enums/admin-status");
-
+const { ADMIN_ROLES } = require("../../BusinessLayer/enums/admin-roles");
 const adminSchema = new mongoose.Schema({
     _id: {
         type: String,
@@ -37,6 +37,12 @@ const adminSchema = new mongoose.Schema({
     //     type: String, 
     //     ref: 'CashAccount',
     // }
+    role: {
+        type: String,
+        required: true,
+        enum: Object.values(ADMIN_ROLES),
+        default: ADMIN_ROLES.ADMIN
+    }
 }); 
 
 const Admin = mongoose.model("Admin", adminSchema);

@@ -1,5 +1,5 @@
-const createAdmin = require("./create-admin");
+const createSuperAdmin = require("./create-admin");
 
 module.exports = {
-    createAdmin,
+    createSuperAdmin,
 }

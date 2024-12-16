@@ -1,11 +1,9 @@
 require("dotenv").config();
 const mongoose = require("mongoose");
 const readLine = require("readline");
-// const fs = require("fs");
-// const path = require("path");
-// const yargs = require("yargs");
 
-const { createAdmin, updateAdmin } = require("./actions");
+
+const { createSuperAdmin, updateAdmin } = require("./actions");
 
 console.log('MONGO_URI:', process.env.MONGODB_URI); 
 
@@ -87,7 +85,7 @@ cli.on("line", async(input) => {
         const {arguments} = parseTokens(tokens, {
           arguments: {name: "string", email: "string", password: "string"}
         })
-        await createAdmin(arguments.name, arguments.email, arguments.password);
+        await createSuperAdmin(arguments.name, arguments.email, arguments.password);
         break;
       }
       case "exit":

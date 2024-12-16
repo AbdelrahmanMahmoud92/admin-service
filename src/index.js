@@ -3,11 +3,14 @@ const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 dotenv.config();
 
-
+const routes = require("./ServerLayer/routes")
 const app = express();
+
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.use(routes);
+
 const PORT = process.env.PORT || 5000;
 if (!process.env.MONGODB_URI) {
   throw new Error('MONGODB_URI environment variable is not set');

@@ -1,9 +1,9 @@
 const { adminService } = require ("../../BusinessLayer/services");
 
-const createAdmin = async(name, email, password) => {
-    const credentials = await adminService.createAdmin(name, email, password);
+const createSuperAdmin = async(name, email, password) => {
+    const credentials = await adminService.createSuperAdmin(name, email, password);
 
     console.log(credentials);
 };
 
-module.exports = createAdmin;
+module.exports = createSuperAdmin;
