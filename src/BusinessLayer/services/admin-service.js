@@ -53,23 +53,23 @@ const createSuperAdmin = async (name, email, password) => {
   };
 };
 
-const loginSuperAdmin = async (email, password) => {
-  const superAdmin = await adminRepository.loginSuperAdminRepo(email, password);
+const loginAdmin = async (email, password) => {
+  const admin = await adminRepository.loginAdminRepo(email, password);
 
-  if (!superAdmin) {
-    throw new ValidationError("Invalid credentials");
+  if (!admin) {
+    throw new ValidationError("Your account is not active");
   }
 
-  const isValidPassword = await bcrypt.compare(password, superAdmin.password);
+  const isValidPassword = await bcrypt.compare(password, admin.password);
 
   if (!isValidPassword) {
     throw new ValidationError("Invalid credentials");
   }
 
   const jwtUser = {
-    id: superAdmin.id,
-    email: superAdmin.email,
-    role: superAdmin.role,
+    id: admin.id,
+    email: admin.email,
+    role: admin.role,
   };
 
   const token = jwt.sign(jwtUser, process.env.JWT_SECRET_KEY, {
@@ -126,15 +126,20 @@ const addAdmin = async (email) => {
   }
 };
 
+
 const updateAdmin = async (email, data) => {
-  await adminRepository.resetAdminDataRepo(email);
+  const admin = await adminRepository.retrieveAdminRepo( {email} );
 
   const password = data.password;
   const hashedPassword = await bcrypt.hash(password, 10);
 
+  // if (admin.status === "active") {  
+  //   throw new Error("The admin already activated");
+  // }
+
   const newAdminData = await adminRepository.resetAdminDataRepo(email, {
-    password: hashedPassword,
-    status: "active",
+    password: hashedPassword,  
+    status: ADMIN_STATUS.ACTIVE || "active",
   });
 
   return newAdminData;
@@ -142,7 +147,7 @@ const updateAdmin = async (email, data) => {
 
 module.exports = {
   createSuperAdmin,
-  loginSuperAdmin,
+  loginAdmin,
   addAdmin,
   updateAdmin,
 };

@@ -21,16 +21,15 @@ const createSuperAdminRepo = async(data) => {
     return toDTO (admin);
 }
 
-const loginSuperAdminRepo = async (email, password) => {
-    const superAdmin = await Admin.findOne({
+const loginAdminRepo = async (email, password) => {
+    const admin = await Admin.findOne({
         email: email,
-        role: ADMIN_ROLES.SUPER_ADMIN,
         status: ADMIN_STATUS.ACTIVE,
     })
-    if (!superAdmin) {
+    if (!admin) {
         return null;
     }
-    return toDTO(superAdmin);
+    return toDTO(admin);
 }
 
 const addAdminRepo = async(data) => {
@@ -40,13 +39,13 @@ const addAdminRepo = async(data) => {
 
 
 const retrieveAdminRepo = async (filter) => {
-    const admin = await Admin.findOne(filter);
+    const admin = await Admin.findOne( filter);
     return admin ? admin : null;
 }
 
 
 const resetAdminDataRepo = async (email, data) => {
-    const admin = await Admin.findOneAndUpdate({ email }, data, { new: true });
+    const admin = await Admin.findOneAndUpdate({ email }, data, { new: true }); 
     if (!admin) {
       return null;
     }
@@ -68,7 +67,7 @@ const resetAdminDataRepo = async (email, data) => {
 
 module.exports = {
     createSuperAdminRepo,
-    loginSuperAdminRepo,
+    loginAdminRepo,
     addAdminRepo,
     retrieveAdminRepo,
     resetAdminDataRepo

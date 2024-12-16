@@ -2,22 +2,21 @@ const asyncHandler = require("express-async-handler");
 const jwt = require("jsonwebtoken");
 const adminService = require("../../BusinessLayer/services/admin-service");
 const adminRepository = require("../../DataLayer/repositories/admin-repository");
-const { ADMIN_ROLES } = require("../../BusinessLayer/enums/admin-roles");
 
-const loginSuperAdminController = asyncHandler(async (req, res) => {
+const loginAdminController = asyncHandler(async (req, res) => {
   console.log(req.body);
   const { email, password } = req.body;
 
-  const superAdmin = await adminRepository.loginSuperAdminRepo(email, password);
+  await adminRepository.loginAdminRepo(email, password);
 
-  if (superAdmin.role !== ADMIN_ROLES.SUPER_ADMIN) {
-    return res.status(401).json({ message: "Unauthorized" });
-  }
+//   if (admin.status === "inactive") {
+//     return res.status(401).json({ message: "Your account is not active" });
+//   }
 
-  const token = await adminService.loginSuperAdmin(email, password);
+  const token = await adminService.loginAdmin(email, password);
 
   res.status(200).json({
-    message: "Super admin logged in successfully",
+    message: "Admin logged in successfully",
     token: token,
   });
 });
@@ -52,7 +51,8 @@ const resetAdminData = asyncHandler(async (req, res) => {
     return res.status(400).send("Password is required");
   }
 
-  await adminService.updateAdmin(email, { password });
+  const currentAdmin = await adminService.updateAdmin(email, { password });
+  console.log(currentAdmin);
 
   res
     .status(200)
@@ -60,7 +60,7 @@ const resetAdminData = asyncHandler(async (req, res) => {
 });
 
 module.exports = {
-  loginSuperAdminController,
+  loginAdminController,
   sendInvaiteEmail,
   resetAdminData,
 };
