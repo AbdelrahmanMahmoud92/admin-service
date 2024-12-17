@@ -15,7 +15,7 @@ const auth = (req, res, next) => {
       return res.status(401).send("Unauthorized");
     }
 
-    console.log(decodedToken);
+    console.log("decodedToken: ", decodedToken);
     req.user = decodedToken;
     next();
   } catch (error) {

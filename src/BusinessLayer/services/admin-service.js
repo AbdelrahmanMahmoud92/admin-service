@@ -34,6 +34,18 @@ const validateStatus = async (status) => {
   }
 };
 
+const validateRole = async (role) => {
+  if (!Object.values(ADMIN_ROLES).includes(role)) {
+    throw new ValidationError("Invalid admin role");
+  }
+};
+
+const validateEmail = async (email) => {
+  if (!validator.isEmail(email)) {
+    throw new ValidationError("Invalid email");
+  }
+};
+
 const createSuperAdmin = async (name, email, password) => {
   await validateName(name);
 
@@ -110,10 +122,9 @@ const addAdmin = async (email) => {
   });
 
   if (admin) {
-    const token = jwt.sign({ admin }, process.env.JWT_SECRET_KEY_ADMIN, {
+    const token = jwt.sign(admin, process.env.JWT_SECRET_KEY_ADMIN, {
       expiresIn: "24h",
     });
-  
 
     try {
       await sendInvaiteEmail(email, token);
@@ -126,21 +137,56 @@ const addAdmin = async (email) => {
   }
 };
 
-
 const updateAdmin = async (email, data) => {
-  const admin = await adminRepository.retrieveAdminRepo( {email} );
+  const admin = await adminRepository.retrieveAdminRepo({ email });
+  if (!admin) {
+    throw new Error("Admin not found");
+  }
 
   const password = data.password;
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  // if (admin.status === "active") {  
-  //   throw new Error("The admin already activated");
-  // }
-
   const newAdminData = await adminRepository.resetAdminDataRepo(email, {
-    password: hashedPassword,  
+    password: hashedPassword,
     status: ADMIN_STATUS.ACTIVE || "active",
   });
+
+  return newAdminData;
+};
+
+const updateAdminData = async (id, data) => {
+  await validateId(id);
+
+  if (data && data.status) await validateStatus(data.status);
+  if (data && data.role) await validateRole(data.role);
+  if (data && data.name) await validateName(data.name);
+  if (data && data.email) await validateEmail(data.email);
+  if (data && data.password) {
+    throw new Error("Unexpected error");
+  }
+
+  const admin = await adminRepository.retrieveAdminRepo({ _id: id });
+  if (!admin) {
+    throw new NotExistError("Admin not found");
+  }
+
+  if (
+    admin.status === ADMIN_STATUS.INACTIVE &&
+    data.status !== ADMIN_STATUS.ACTIVE
+  ) {
+    throw new Error("Admin is not active");
+  }
+
+  if ((data && data.role) || (data && data.status)) {
+    if (
+      (admin.role !== ADMIN_ROLES.ADMIN && data.role) ||
+      (admin.role !== ADMIN_ROLES.ADMIN && data.status)
+    ) {
+      throw new Error("You are not allowed to change these data");
+    }
+  }
+
+  const newAdminData = await adminRepository.updateAdminDataRepo(id, data);
 
   return newAdminData;
 };
@@ -150,4 +196,5 @@ module.exports = {
   loginAdmin,
   addAdmin,
   updateAdmin,
+  updateAdminData,
 };

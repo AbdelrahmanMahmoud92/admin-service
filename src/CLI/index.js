@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const readLine = require("readline");
 
 
-const { createSuperAdmin, updateAdmin } = require("./actions");
+const { createSuperAdmin } = require("./actions");
 
 console.log('MONGO_URI:', process.env.MONGODB_URI); 
 

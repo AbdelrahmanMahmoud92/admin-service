@@ -1,7 +1,6 @@
-const {Router} = require("express");
+const { Router } = require("express");
 
-
-const adminRoutes = require("./api")
+const adminRoutes = require("./api");
 
 const router = Router();
 router.use("/api", adminRoutes);
