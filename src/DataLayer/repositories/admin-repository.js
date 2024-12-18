@@ -83,11 +83,11 @@ const retrieveCurrentAdminRepo = async (id) => {
 const searchAdminsRepo = async (filters) => {
   const query = {};
   if (filters.name) query.name = { $regex: filters.name, $options: "i" };
-  
+
   // Searching until @
   if (filters.email) {
-    const emailPrefix = filters.email.split("@")[0]; 
-    query.email = { $regex: `^${emailPrefix}`, $options: "i" }; 
+    const emailPrefix = filters.email.split("@")[0];
+    query.email = { $regex: `^${emailPrefix}`, $options: "i" };
   }
   if (filters.status) query.status = filters.status;
   if (filters.role) query.role = filters.role;

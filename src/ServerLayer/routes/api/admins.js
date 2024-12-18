@@ -13,7 +13,7 @@ router.post(
   role.check(ADMIN_ROLES.SUPER_ADMIN),
   adminController.sendInvaiteEmail
 );
-router.patch("/reset-password", adminController.resetAdminData);
+router.patch("/reset-password", adminController.resetPassword);
 
 router.patch(
   "/update-admin-data/:id?",
@@ -63,7 +63,7 @@ router.get(
   auth,
   role.check(ADMIN_ROLES.ADMIN, ADMIN_ROLES.SUPER_ADMIN),
   adminController.retrieveCurrentAdmin
-)
+);
 
 router.patch(
   "/change-role/:id?",
@@ -77,6 +77,13 @@ router.get(
   auth,
   role.check(ADMIN_ROLES.SUPER_ADMIN),
   adminController.searchAdmins
+);
+
+router.post(
+  "/ask-reset-password",
+  auth,
+  role.check(ADMIN_ROLES.ADMIN, ADMIN_ROLES.SUPER_ADMIN),
+  adminController.forgotPassword
 );
 
 module.exports = router;

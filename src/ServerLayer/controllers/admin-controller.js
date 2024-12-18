@@ -26,7 +26,7 @@ const sendInvaiteEmail = asyncHandler(async (req, res) => {
   res.status(200).json({ message: "Invitation email sent successfully" });
 });
 
-const resetAdminData = asyncHandler(async (req, res) => {
+const resetPassword = asyncHandler(async (req, res) => {
   const token = req.query.token;
 
   let decodedToken;
@@ -45,7 +45,7 @@ const resetAdminData = asyncHandler(async (req, res) => {
     return res.status(400).send("Password is required");
   }
 
-  const currentAdmin = await adminService.updateAdmin(email, { password });
+  const currentAdmin = await adminService.resetPassword(email, { password });
 
   res
     .status(200)
@@ -282,10 +282,28 @@ const searchAdmins = asyncHandler(async (req, res) => {
   });
 });
 
+const forgotPassword = asyncHandler(async (req, res) => {
+  const user = req.user;
+  const email = user.email;
+
+  console.log(email);
+  console.log(req.body.email);
+
+  if (user.email !== req.body.email) {
+    return res.status(401).send("Unauthorized");
+  }
+
+  await adminService.forgotPassword(email);
+
+  res.status(200).json({
+    message: "Password reset email sent successfully",
+  });
+});
+
 module.exports = {
   loginAdminController,
   sendInvaiteEmail,
-  resetAdminData,
+  resetPassword,
   updateAdminData,
   deleteAdmin,
   activateAdmin,
@@ -295,4 +313,5 @@ module.exports = {
   retrieveCurrentAdmin,
   changeRole,
   searchAdmins,
+  forgotPassword,
 };

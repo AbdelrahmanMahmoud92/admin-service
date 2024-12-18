@@ -11,7 +11,13 @@ const {
   InvalidStatusError,
 } = require("../errors/index");
 const { ADMIN_ROLES } = require("../enums/admin-roles");
-const sendInvaiteEmail = require("../utils/sendEmail");
+const {
+  sendActivateEmail,
+  sendDeactivateEmail,
+  sendNewRoleEmail,
+  sendResetEmail,
+  sendDeleteEmail,
+} = require("../utils/sendEmail");
 
 const validateId = async (id) => {
   if (!validator.isUUID(id)) {
@@ -126,8 +132,10 @@ const addAdmin = async (email) => {
       expiresIn: "24h",
     });
 
+    console.log(token);
+
     try {
-      await sendInvaiteEmail(email, token);
+      await sendResetEmail(email, token);
     } catch (error) {
       console.error("Error sending invitation email:", error);
       throw new Error("Admin added, but email failed to send.");
@@ -137,7 +145,7 @@ const addAdmin = async (email) => {
   }
 };
 
-const updateAdmin = async (email, data) => {
+const resetPassword = async (email, data) => {
   const admin = await adminRepository.retrieveAdminRepo({ email });
   if (!admin) {
     throw new Error("Admin not found");
@@ -204,6 +212,14 @@ const activateAdmin = async (id) => {
   const updatedAdmin = await adminRepository.updateAdminDataRepo(id, {
     status: ADMIN_STATUS.ACTIVE,
   });
+  try {
+    await sendActivateEmail(admin.email);
+  } catch (error) {
+    console.error("Error sending activation email:", error);
+    throw new Error("Admin became active, but email failed to send.");
+  }
+
+  return updatedAdmin;
 };
 
 const deactivateAdmin = async (id) => {
@@ -219,6 +235,13 @@ const deactivateAdmin = async (id) => {
   const updatedAdmin = await adminRepository.updateAdminDataRepo(id, {
     status: ADMIN_STATUS.INACTIVE,
   });
+
+  try {
+    await sendDeactivateEmail(admin.email);
+  } catch (error) {
+    console.error("Error sending deactivation email:", error);
+    throw new Error("Admin became inactive, but email failed to send.");
+  }
   return updatedAdmin;
 };
 
@@ -235,6 +258,12 @@ const changeRole = async (id, role) => {
   const updatedAdmin = await adminRepository.updateAdminDataRepo(id, {
     role: role,
   });
+  try {
+    await sendNewRoleEmail(admin.email, role);
+  } catch (error) {
+    console.error("Error sending new role email:", error);
+    throw new Error("Admin role changed, but email failed to send.");
+  }
   return updatedAdmin;
 };
 
@@ -265,6 +294,12 @@ const deleteAdmin = async (id) => {
   }
 
   const deletedAdmin = await adminRepository.deleteAdminRepo(id);
+  try {
+    await sendDeleteEmail(admin.email);
+  } catch (error) {
+    console.error("Error sending delete email:", error);
+    throw new Error("Admin deleted, but email failed to send.");
+  }
   return deletedAdmin;
 };
 
@@ -291,24 +326,52 @@ const retrieveCurrentAdmin = async (id) => {
   return admin;
 };
 
-const searchAdmins = async(filters) => {
-  if(!filters || typeof filters !== 'object') {
+const searchAdmins = async (filters) => {
+  if (!filters || typeof filters !== "object") {
     throw new ValidationError("Filters must be an object");
   }
 
   const admins = await adminRepository.searchAdminsRepo(filters);
-  if(admins.length === 0) {
+  if (admins.length === 0) {
     throw new NotExistError("No admins found with the provided filters");
   }
 
-  return admins
-}
+  return admins;
+};
+
+const forgotPassword = async (email) => {
+  const admin = await adminRepository.retrieveAdminRepo({
+    email,
+    status: ADMIN_STATUS.ACTIVE,
+  });
+  if (!admin) {
+    throw new NotExistError("Unable to find admin");
+  }
+  const adminPayload = {
+    name: admin.name,
+    password: admin.password,
+    email: admin.email,
+    role: admin.role,
+    status: admin.status,
+  };
+
+  const token = jwt.sign(adminPayload, process.env.JWT_SECRET_KEY_ADMIN, {
+    expiresIn: "15m",
+  });
+
+  try {
+    await sendResetEmail(admin.email, token);
+  } catch (error) {
+    console.error("Error sending reset email:", error);
+    throw new Error("Email failed to send.");
+  }
+};
 
 module.exports = {
   createSuperAdmin,
   loginAdmin,
   addAdmin,
-  updateAdmin,
+  resetPassword,
   updateAdminData,
   deleteAdmin,
   // toggleAdminStatus,
@@ -319,4 +382,5 @@ module.exports = {
   retrieveCurrentAdmin,
   changeRole,
   searchAdmins,
+  forgotPassword,
 };
