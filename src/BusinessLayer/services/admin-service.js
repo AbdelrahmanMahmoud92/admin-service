@@ -69,7 +69,7 @@ const loginAdmin = async (email, password) => {
   const admin = await adminRepository.loginAdminRepo(email, password);
 
   if (!admin) {
-    throw new ValidationError("Your account is not active");
+    throw new ValidationError("You are not an admin");
   }
 
   const isValidPassword = await bcrypt.compare(password, admin.password);
@@ -157,13 +157,13 @@ const updateAdmin = async (email, data) => {
 const updateAdminData = async (id, data) => {
   await validateId(id);
 
-  if (data && data.status) await validateStatus(data.status);
-  if (data && data.role) await validateRole(data.role);
+  // It's not the place to change these data.
+  if (data && data.status) throw new Error("Unexpected error");
+  if (data && data.role) throw new Error("Unexpected error");
+  if (data && data.password) throw new Error("Unexpected error");
+
   if (data && data.name) await validateName(data.name);
   if (data && data.email) await validateEmail(data.email);
-  if (data && data.password) {
-    throw new Error("Unexpected error");
-  }
 
   const admin = await adminRepository.retrieveAdminRepo({ _id: id });
   if (!admin) {
@@ -178,12 +178,12 @@ const updateAdminData = async (id, data) => {
   }
 
   if ((data && data.role) || (data && data.status)) {
-    if (
-      (admin.role !== ADMIN_ROLES.ADMIN && data.role) ||
-      (admin.role !== ADMIN_ROLES.ADMIN && data.status)
-    ) {
-      throw new Error("You are not allowed to change these data");
-    }
+    // if (
+    //   (admin.role !== ADMIN_ROLES.ADMIN && data.role) ||
+    //   (admin.role !== ADMIN_ROLES.ADMIN && data.status)
+    // ) {
+    throw new Error("You are not allowed to change these data");
+    // }
   }
 
   const newAdminData = await adminRepository.updateAdminDataRepo(id, data);
@@ -191,10 +191,132 @@ const updateAdminData = async (id, data) => {
   return newAdminData;
 };
 
+const activateAdmin = async (id) => {
+  const admin = await adminRepository.retrieveAdminRepo({ _id: id });
+  if (!admin) {
+    throw new NotExistError("Admin not found");
+  }
+
+  if (admin.status === ADMIN_STATUS.ACTIVE) {
+    throw new Error("Admin is already active");
+  }
+
+  const updatedAdmin = await adminRepository.updateAdminDataRepo(id, {
+    status: ADMIN_STATUS.ACTIVE,
+  });
+};
+
+const deactivateAdmin = async (id) => {
+  const admin = await adminRepository.retrieveAdminRepo({ _id: id });
+  if (!admin) {
+    throw new NotExistError("Admin not found");
+  }
+
+  if (admin.status === ADMIN_STATUS.INACTIVE) {
+    throw new Error("Admin is already inactive");
+  }
+
+  const updatedAdmin = await adminRepository.updateAdminDataRepo(id, {
+    status: ADMIN_STATUS.INACTIVE,
+  });
+  return updatedAdmin;
+};
+
+const changeRole = async (id, role) => {
+  const admin = await adminRepository.retrieveAdminRepo({ _id: id });
+  if (!admin) {
+    throw new NotExistError("Admin not found");
+  }
+  await validateRole(role);
+  if (admin.role === role) {
+    throw new Error("Admin already has this role");
+  }
+
+  const updatedAdmin = await adminRepository.updateAdminDataRepo(id, {
+    role: role,
+  });
+  return updatedAdmin;
+};
+
+// const toggleAdminStatus = async (id, status) => {
+//   const admin = await adminRepository.retrieveAdminRepo({ _id: id });
+//   if (!admin) {
+//     throw new NotExistError("Admin not found");
+//   }
+
+//   if (status) validateStatus(status);
+
+//   if (admin.status === status) {
+//     throw new Error(`Admin is already ${status === ADMIN_STATUS.ACTIVE ? 'active' : 'inactive'}`);
+//   }
+
+//   const updatedAdmin = await adminRepository.updateAdminDataRepo(id,  status );
+//   return updatedAdmin;
+// };
+
+const deleteAdmin = async (id) => {
+  const admin = await adminRepository.retrieveAdminRepo({ _id: id });
+  if (!admin) {
+    throw new NotExistError("Admin not found");
+  }
+
+  if (admin.status === ADMIN_STATUS.INACTIVE) {
+    throw new Error("Admin is not active");
+  }
+
+  const deletedAdmin = await adminRepository.deleteAdminRepo(id);
+  return deletedAdmin;
+};
+
+const retrieveAdmins = async () => {
+  const admins = await adminRepository.retrieveAdminsRepo({
+    role: ADMIN_ROLES.ADMIN,
+  });
+  return admins;
+};
+
+const retrieveSuperAdmins = async () => {
+  const admins = await adminRepository.retrieveAdminsRepo({
+    role: ADMIN_ROLES.SUPER_ADMIN,
+  });
+  return admins;
+};
+
+const retrieveCurrentAdmin = async (id) => {
+  const admin = await adminRepository.retrieveCurrentAdminRepo(id);
+  if (!admin) {
+    throw new NotExistError("Admin not found");
+  }
+
+  return admin;
+};
+
+const searchAdmins = async(filters) => {
+  if(!filters || typeof filters !== 'object') {
+    throw new ValidationError("Filters must be an object");
+  }
+
+  const admins = await adminRepository.searchAdminsRepo(filters);
+  if(admins.length === 0) {
+    throw new NotExistError("No admins found with the provided filters");
+  }
+
+  return admins
+}
+
 module.exports = {
   createSuperAdmin,
   loginAdmin,
   addAdmin,
   updateAdmin,
   updateAdminData,
+  deleteAdmin,
+  // toggleAdminStatus,
+  deactivateAdmin,
+  activateAdmin,
+  retrieveAdmins,
+  retrieveSuperAdmins,
+  retrieveCurrentAdmin,
+  changeRole,
+  searchAdmins,
 };

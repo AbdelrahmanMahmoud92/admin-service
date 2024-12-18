@@ -102,9 +102,197 @@ const updateAdminData = asyncHandler(async (req, res) => {
   });
 });
 
+const deleteAdmin = asyncHandler(async (req, res) => {
+  const user = req.user;
+  const targetId = req.params.id;
+
+  if (
+    (user.role === ADMIN_ROLES.ADMIN && targetId !== user.id) ||
+    (user.role === ADMIN_ROLES.ADMIN && targetId !== user.id)
+  ) {
+    return res
+      .status(403)
+      .send("You are not allowed to modify other admins' data");
+  }
+  if (user.role === ADMIN_ROLES.SUPER_ADMIN && targetId === user.id) {
+    return res.status(403).send("Error: Super Admin cannot be deleted");
+  }
+
+  const deletedAdmin = await adminService.deleteAdmin(targetId);
+
+  res.status(200).json({
+    message: "Admin data deleted successfully",
+    data: deletedAdmin,
+  });
+});
+
+const activateAdmin = asyncHandler(async (req, res) => {
+  const user = req.user;
+  const targetId = req.params.id;
+
+  if (
+    (user.role === ADMIN_ROLES.ADMIN && targetId === user.id) ||
+    (user.role === ADMIN_ROLES.ADMIN && targetId !== user.id)
+  ) {
+    return res
+      .status(403)
+      .send("You are not allowed to modify other admins' data");
+  }
+
+  if (user.role === ADMIN_ROLES.SUPER_ADMIN && targetId === user.id) {
+    return res.status(403).send("Error: Super Admin cannot change status");
+  }
+
+  const activatedAdmin = await adminService.activateAdmin(targetId);
+
+  res.status(200).json({
+    message: "Admin activated successfully",
+    data: activatedAdmin,
+  });
+});
+
+const deactivateAdmin = asyncHandler(async (req, res) => {
+  const user = req.user;
+  const targetId = req.params.id;
+
+  if (
+    (user.role === ADMIN_ROLES.ADMIN && targetId !== user.id) ||
+    (user.role === ADMIN_ROLES.ADMIN && targetId !== user.id)
+  ) {
+    return res
+      .status(403)
+      .send("You are not allowed to modify other admins' data");
+  }
+
+  if (user.role === ADMIN_ROLES.SUPER_ADMIN && targetId === user.id) {
+    return res.status(403).send("Error: Super Admin cannot change status");
+  }
+
+  const deactivatedAdmin = await adminService.deactivateAdmin(targetId);
+
+  res.status(200).json({
+    message: "Admin deactivated successfully",
+    data: deactivatedAdmin,
+  });
+});
+
+const changeRole = asyncHandler(async (req, res) => {
+  const user = req.user;
+  const targetId = req.params.id;
+  const { role } = req.body;
+  if (!role) {
+    return res.status(400).send("Role is required.");
+  }
+
+  if (user.role === ADMIN_ROLES.ADMIN) {
+    return res
+      .status(403)
+      .send("You are not allowed to modify other admins' data");
+  }
+
+  if (user.role === ADMIN_ROLES.SUPER_ADMIN && targetId === user.id) {
+    return res.status(403).send("Error: Super Admin cannot change role");
+  }
+
+  const updatedAdmin = await adminService.changeRole(targetId, role);
+
+  res.status(200).json({
+    message: `Admin role changed successfully to ${role}`,
+    data: updatedAdmin,
+  });
+});
+
+const retrieveAdmins = asyncHandler(async (req, res) => {
+  const user = req.user;
+
+  if (user.role !== ADMIN_ROLES.SUPER_ADMIN) {
+    return res
+      .status(403)
+      .send("You are not allowed to modify other admins' data");
+  }
+
+  const admins = await adminService.retrieveAdmins();
+  if (admins.length === 0)
+    return res.status(202).json({ message: "No admins in the system" });
+
+  res.status(200).json({
+    message: "Admins retrieved successfully",
+    data: admins,
+  });
+});
+
+const retrieveSuperAdmins = asyncHandler(async (req, res) => {
+  const user = req.user;
+
+  if (user.role !== ADMIN_ROLES.SUPER_ADMIN) {
+    return res
+      .status(403)
+      .send("You are not allowed to modify other admins' data");
+  }
+  const admins = await adminService.retrieveSuperAdmins();
+
+  if (admins.length === 1 && !admins.includes(user.id))
+    return res.status(202).json({ message: "No super admins in the system" });
+
+  // Remove the current super admin from the list of super admins
+
+  const filteredAdmins = admins.filter((admin) => admin.id !== user.id);
+
+  res.status(200).json({
+    message: "Admins retrieved successfully",
+    data: filteredAdmins,
+  });
+});
+
+const retrieveCurrentAdmin = asyncHandler(async (req, res) => {
+  const user = req.user;
+  const role = user.role;
+  console.log(role);
+
+  const admin = await adminService.retrieveCurrentAdmin(user.id);
+
+  if (!admin) {
+    return res.status(202).json({ message: "This page is not available." });
+  }
+
+  res.status(200).json({
+    message: `${role} retrieved successfully`,
+    data: user,
+  });
+});
+
+const searchAdmins = asyncHandler(async (req, res) => {
+  const filters = req.query;
+  const user = req.user;
+  if (user.role !== ADMIN_ROLES.SUPER_ADMIN) {
+    return res
+      .status(403)
+      .send("You are not allowed to modify other admins' data");
+  }
+  let filterMessage = Object.entries(filters)
+    .map(([key, value]) => {
+      return `${value} ${key}`;
+    })
+    .join(", ");
+
+  const admins = await adminService.searchAdmins(filters);
+  res.status(200).json({
+    message: `Admins with ${filterMessage} retrieved successfully`,
+    data: admins,
+  });
+});
+
 module.exports = {
   loginAdminController,
   sendInvaiteEmail,
   resetAdminData,
   updateAdminData,
+  deleteAdmin,
+  activateAdmin,
+  deactivateAdmin,
+  retrieveAdmins,
+  retrieveSuperAdmins,
+  retrieveCurrentAdmin,
+  changeRole,
+  searchAdmins,
 };

@@ -23,9 +23,9 @@ const loginAdminRepo = async (email, password) => {
     email: email,
     status: ADMIN_STATUS.ACTIVE,
   });
-  if (!admin) {
-    return null;
-  }
+
+  if (!admin) return null;
+
   return toDTO(admin);
 };
 
@@ -42,9 +42,8 @@ const retrieveAdminRepo = async (filter) => {
 
 const resetAdminDataRepo = async (email, data) => {
   const admin = await Admin.findOneAndUpdate({ email }, data, { new: true });
-  if (!admin) {
-    return null;
-  }
+  if (!admin) return null;
+
   console.log("ttttttttttttttttttttttttttttttttttttttttttt");
   return admin;
 };
@@ -55,14 +54,47 @@ const updateAdminDataRepo = async (id, data) => {
   return admin;
 };
 
-// const retrieveAdmins = async (filter, pagination) => {
-//     const admins = await Admin.find(filter)
-//       .skip(pagination.skip)
-//       .limit(pagination.limit);
-
-//     return clients.map(toDTO);
+// const deactivateAccount = async (id) => {
+//   const admin = await Admin.findByIdAndUpdate(id, { status: ADMIN_STATUS.INACTIVE }, { new: true });
+//   if (!admin)  return null;
+//   return admin;
 // };
 
+const deleteAdminRepo = async (id) => {
+  const admin = await Admin.findByIdAndDelete(id);
+  if (!admin) return null;
+
+  return admin;
+};
+
+const retrieveAdminsRepo = async (filter, pagination) => {
+  const admins = await Admin.find(filter).skip(pagination).limit(pagination);
+
+  return admins.map(toDTO);
+};
+
+const retrieveCurrentAdminRepo = async (id) => {
+  const admin = await Admin.findById(id);
+  if (!admin) return null;
+
+  return toDTO(admin);
+};
+
+const searchAdminsRepo = async (filters) => {
+  const query = {};
+  if (filters.name) query.name = { $regex: filters.name, $options: "i" };
+  
+  // Searching until @
+  if (filters.email) {
+    const emailPrefix = filters.email.split("@")[0]; 
+    query.email = { $regex: `^${emailPrefix}`, $options: "i" }; 
+  }
+  if (filters.status) query.status = filters.status;
+  if (filters.role) query.role = filters.role;
+
+  const admins = await Admin.find(query);
+  return admins.map(toDTO);
+};
 module.exports = {
   createSuperAdminRepo,
   loginAdminRepo,
@@ -70,4 +102,8 @@ module.exports = {
   retrieveAdminRepo,
   resetAdminDataRepo,
   updateAdminDataRepo,
+  deleteAdminRepo,
+  retrieveAdminsRepo,
+  retrieveCurrentAdminRepo,
+  searchAdminsRepo,
 };

@@ -22,4 +22,61 @@ router.patch(
   adminController.updateAdminData
 );
 
+// Senstive route
+router.delete(
+  "/super-admin/delete-admin/:id?",
+  auth,
+  role.check(ADMIN_ROLES.ADMIN, ADMIN_ROLES.SUPER_ADMIN),
+  adminController.deleteAdmin
+);
+
+router.patch(
+  "/super-admin/activate-admin/:id?",
+  auth,
+  role.check(ADMIN_ROLES.ADMIN, ADMIN_ROLES.SUPER_ADMIN),
+  adminController.activateAdmin
+);
+
+router.patch(
+  "/super-admin/deactivate-admin/:id?",
+  auth,
+  role.check(ADMIN_ROLES.ADMIN, ADMIN_ROLES.SUPER_ADMIN),
+  adminController.deactivateAdmin
+);
+
+router.get(
+  "/super-admin/retrieve-admins",
+  auth,
+  role.check(ADMIN_ROLES.SUPER_ADMIN),
+  adminController.retrieveAdmins
+);
+
+router.get(
+  "/super-admin/retrieve-super-admins",
+  auth,
+  role.check(ADMIN_ROLES.SUPER_ADMIN),
+  adminController.retrieveSuperAdmins
+);
+
+router.get(
+  "/my-profile",
+  auth,
+  role.check(ADMIN_ROLES.ADMIN, ADMIN_ROLES.SUPER_ADMIN),
+  adminController.retrieveCurrentAdmin
+)
+
+router.patch(
+  "/change-role/:id?",
+  auth,
+  role.check(ADMIN_ROLES.SUPER_ADMIN),
+  adminController.changeRole
+);
+
+router.get(
+  "/super-admin/search-admins",
+  auth,
+  role.check(ADMIN_ROLES.SUPER_ADMIN),
+  adminController.searchAdmins
+);
+
 module.exports = router;
