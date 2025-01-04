@@ -3,10 +3,15 @@ const { Router } = require("express");
 const router = Router();
 
 const adminController = require("../../controllers/admin-controller");
+const userController = require("../../controllers/user-controller");
 const role = require("../../middlewares/check-role");
 const auth = require("../../middlewares/auth");
 const { ADMIN_ROLES } = require("../../../BusinessLayer/enums/admin-roles");
-router.post("/login", adminController.loginAdminController);
+const passport = require("passport");
+router.post(
+  "/login",
+  adminController.loginAdminController
+);
 router.post(
   "/super-admin/admin-invataion",
   auth,
@@ -86,4 +91,20 @@ router.post(
   adminController.forgotPassword
 );
 
+
+// Users
+router.get(
+  "/retrieve-users",
+  auth,
+  role.check(ADMIN_ROLES.SUPER_ADMIN, ADMIN_ROLES.ADMIN),
+  userController.retrieveAllUsersController,
+)
+
+router.get(
+  "/search-users",
+  auth,
+  role.check(ADMIN_ROLES.SUPER_ADMIN, ADMIN_ROLES.ADMIN),
+  userController.searchUsersController
+  
+)
 module.exports = router;
