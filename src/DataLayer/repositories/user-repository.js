@@ -29,8 +29,7 @@ const loginUserRepo = async (email) => {
 const retrieveAllUsersRepo = async () => {
   const users = await User.find();
 
-  return users;
-};
+  return users.map(({ googleId, ...user }) => user);};
 
 const searchUsersRepo = async (filters) => {
   const query = {};
@@ -46,6 +45,19 @@ const searchUsersRepo = async (filters) => {
   const users = await User.find(query);
   return users;
 };
+const retrieveCurrentUserRepo = async (id) => {
+  const user = await User.findById(id);
+  if (!user) return null;
+
+  return user;
+};
+
+const disconnectGoogleRepo = async (id) => {
+  const user = await User.findByIdAndDelete(id);
+  if (!user) return null;
+
+  return user;
+};
 
 module.exports = {
   signUpUserRepo,
@@ -53,4 +65,7 @@ module.exports = {
   loginUserRepo,
   retrieveAllUsersRepo,
   searchUsersRepo,
+  retrieveCurrentUserRepo,
+  disconnectGoogleRepo,
 };
+

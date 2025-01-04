@@ -33,5 +33,16 @@ router.get("/logout", auth, userController.logoutUserController);
 
 router.post("/login", userController.loginUserController);
 
+router.get(
+  "/my-profile",
+  auth,
+  userController.retrieveCurrentUserController,
+);
+
+router.delete(
+  "/disconnect-google",
+  auth,
+  userController.disconnectGoogle,
+);
 
 module.exports = router;

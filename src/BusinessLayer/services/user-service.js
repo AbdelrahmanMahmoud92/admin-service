@@ -1,5 +1,5 @@
 const userRepository = require("../../DataLayer/repositories/user-repository");
-const { ValidationError } = require("../errors");
+const { ValidationError, NotExistError } = require("../errors");
 const jwt = require("jsonwebtoken");
 const { generateTokens } = require("./token.service");
 
@@ -51,9 +51,28 @@ const searchUsers = async (filters) => {
   return users;
 };
 
+
+const retrieveCurrentUser = async (id) => {
+  const user = await userRepository.retrieveCurrentUserRepo(id);
+  if (!user) {
+    throw new NotExistError("User not found");
+  }
+  return user;
+};
+
+
+const disconnectGoogle = async (id) => {
+  const user = await userRepository.disconnectGoogleRepo(id);
+  if (!user) {
+    throw new NotExistError("User not found");
+  }
+  return user;
+}
 module.exports = {
   handleGoogleUserService,
   loginUser,
   retrieveAllUsers,
   searchUsers,
+  retrieveCurrentUser,
+  disconnectGoogle,
 };

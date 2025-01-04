@@ -100,9 +100,36 @@ const searchUsersController = asyncHandler(async (req, res) => {
     data: users,
   });
 });
+
+const retrieveCurrentUserController = asyncHandler(async (req, res) => {
+  const user = req.user;
+
+  const currentUser = await userService.retrieveCurrentUser(user.id);
+  if(!currentUser){
+    return res.status(202).json({ message: "This page is not available." });
+  }
+
+  res.status(200).json({
+    message: "User retrieved successfully",
+    yourProfile: currentUser,
+  });
+})
+
+const disconnectGoogle = asyncHandler(async (req, res) => {
+  const user = req.user;
+
+  const currentUser = await userService.disconnectGoogle(user.id);
+
+  res.status(200).json({
+    message: "You have successfully disconnected your Google account.",
+  });
+});
+
 module.exports = {
   loginUserController,
   retrieveAllUsersController,
   searchUsersController,
   logoutUserController,
+  retrieveCurrentUserController,
+  disconnectGoogle,
 };
