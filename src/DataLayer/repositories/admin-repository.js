@@ -1,5 +1,5 @@
 const { ADMIN_ROLES } = require("../../BusinessLayer/enums/admin-roles");
-const { ADMIN_STATUS } = require("../../BusinessLayer/enums/admin-status");
+const { STATUS } = require("../../BusinessLayer/enums/status");
 const Admin = require("../models/Admin");
 
 // Function have an argument with properties and return a new format
@@ -21,7 +21,7 @@ const createSuperAdminRepo = async (data) => {
 const loginAdminRepo = async (email, password) => {
   const admin = await Admin.findOne({
     email: email,
-    status: ADMIN_STATUS.ACTIVE,
+    status: STATUS.ACTIVE,
   });
 
   if (!admin) return null;
@@ -55,7 +55,7 @@ const updateAdminDataRepo = async (id, data) => {
 };
 
 // const deactivateAccount = async (id) => {
-//   const admin = await Admin.findByIdAndUpdate(id, { status: ADMIN_STATUS.INACTIVE }, { new: true });
+//   const admin = await Admin.findByIdAndUpdate(id, { status: STATUS.INACTIVE }, { new: true });
 //   if (!admin)  return null;
 //   return admin;
 // };

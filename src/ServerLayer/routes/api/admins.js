@@ -18,6 +18,7 @@ router.post(
   role.check(ADMIN_ROLES.SUPER_ADMIN),
   adminController.sendInvaiteEmail
 );
+
 router.patch("/reset-password", adminController.resetPassword);
 
 router.patch(

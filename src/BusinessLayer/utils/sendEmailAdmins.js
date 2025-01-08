@@ -1,11 +1,11 @@
 const nodemailer = require("nodemailer");
 const dotenv = require("dotenv");
-const asyncHandler = require("express-async-handler");
-
 dotenv.config();
+const asyncHandler = require("express-async-handler");
 
 const transport = nodemailer.createTransport({
   service: "gmail",
+  // secure: false,
   auth: {
     user: process.env.EMAIL,
     pass: process.env.PASSWORD,
@@ -29,12 +29,13 @@ const sendResetEmail = async (email, token) => {
   }
 };
 
-const sendActivateEmail = async (email) => {
+const sendActivateEmail = async (email, role) => {
   const emailInfo = {
     from: process.env.EMAIL,
     to: email,
     subject: "Email activation!",
     text: `Congratulations! Your account has been activated. You can now login with your account now.\n\n
+    Your role is: ${role},\n\n
     Login link: http://localhost:${process.env.PORT}/api/v1/admins/login`,
   };
   try {

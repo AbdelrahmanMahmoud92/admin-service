@@ -3,12 +3,15 @@ const jwt = require("jsonwebtoken");
 const adminService = require("../../BusinessLayer/services/admin-service");
 const adminRepository = require("../../DataLayer/repositories/admin-repository");
 const { ADMIN_ROLES } = require("../../BusinessLayer/enums/admin-roles");
-const { ADMIN_STATUS } = require("../../BusinessLayer/enums/admin-status");
+const { STATUS } = require("../../BusinessLayer/enums/status");
+const {
+  sendActivateEmail,
+} = require("../../BusinessLayer/utils/sendEmailAdmins");
 
 const loginAdminController = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
-  const admin = await adminRepository.loginAdminRepo(email, password);
+  await adminRepository.loginAdminRepo(email, password);
 
   const token = await adminService.loginAdmin(email, password);
 
@@ -19,9 +22,9 @@ const loginAdminController = asyncHandler(async (req, res) => {
 });
 
 const sendInvaiteEmail = asyncHandler(async (req, res) => {
-  const { email } = req.body;
+  const { email, role } = req.body;
 
-  await adminService.addAdmin(email);
+  await adminService.addAdmin(email, role);
 
   res.status(200).json({ message: "Invitation email sent successfully" });
 });
@@ -44,40 +47,12 @@ const resetPassword = asyncHandler(async (req, res) => {
   if (!password) {
     return res.status(400).send("Password is required");
   }
-
-  const currentAdmin = await adminService.resetPassword(email, { password });
+  await adminService.resetPassword(email, { password });
 
   res
     .status(200)
     .json({ message: "Password updated successfully. You can login now." });
 });
-
-// const updateAdminData = asyncHandler(async (req, res) => {
-//   const user = req.user;
-//   let { adminData } = req.body;
-
-//   if (!adminData || Object.keys(adminData).length === 0) {
-//     return res.status(400).send("No data provided for update");
-//   }
-
-//   if (adminData.password) {
-//     return res
-//       .status(400)
-//       .json({ error: "Password update is not allowed through this endpoint" });
-//   }
-
-//   if (req.user.role === ADMIN_ROLES.ADMIN && req.params.id !== user.id) {
-//     return res.status(403).send("You are not allowed to make this request");
-//   }
-
-//   const newAdminData = await adminService.updateAdminData(
-//     req.params.id,
-//     adminData
-//   );
-//   res
-//     .status(200)
-//     .json({ message: "Admin data updated successfully", data: newAdminData });
-// });
 
 const updateAdminData = asyncHandler(async (req, res) => {
   const user = req.user;
@@ -256,7 +231,7 @@ const retrieveCurrentAdmin = asyncHandler(async (req, res) => {
   }
 
   res.status(200).json({
-    message: `${role} retrieved successfully`,
+    // message: `${role} retrieved successfully`,
     data: user,
   });
 });

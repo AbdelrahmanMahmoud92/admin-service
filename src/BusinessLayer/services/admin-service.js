@@ -4,7 +4,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
 const adminRepository = require("../../DataLayer/repositories/admin-repository");
-const { ADMIN_STATUS } = require("../../BusinessLayer/enums/admin-status");
+const { STATUS } = require("../enums/status");
 const {
   ValidationError,
   NotExistError,
@@ -17,7 +17,8 @@ const {
   sendNewRoleEmail,
   sendResetEmail,
   sendDeleteEmail,
-} = require("../utils/sendEmail");
+} = require("../utils/sendEmailAdmins");
+const sendActivateEmailOnce = require("../utils/sendEmailOnce");
 
 const validateId = async (id) => {
   if (!validator.isUUID(id)) {
@@ -35,14 +36,14 @@ const validateName = async (name) => {
 };
 
 const validateStatus = async (status) => {
-  if (!Object.values(ADMIN_STATUS).includes(status)) {
+  if (!Object.values(STATUS).includes(status)) {
     throw new InvalidStatusError("Invalid admin status");
   }
 };
 
 const validateRole = async (role) => {
   if (!Object.values(ADMIN_ROLES).includes(role)) {
-    throw new ValidationError("Invalid admin role");
+    throw new ValidationError("Invalid role");
   }
 };
 
@@ -57,11 +58,15 @@ const createSuperAdmin = async (name, email, password) => {
 
   const hashedPassword = await bcrypt.hash(password, 10);
 
+  await sendActivateEmail(email, role);
+
+  // Set the emailSent flag to true to prevent future sends
+  emailSent = true;
   await adminRepository.createSuperAdminRepo({
     name,
     email,
     role: ADMIN_ROLES.SUPER_ADMIN,
-    status: ADMIN_STATUS.ACTIVE,
+    status: STATUS.INACTIVE,
     password: hashedPassword,
   });
 
@@ -97,18 +102,18 @@ const loginAdmin = async (email, password) => {
   return token;
 };
 
-const addAdmin = async (email) => {
+const addAdmin = async (email, role) => {
   const exitingAdmin = await adminRepository.retrieveAdminRepo({
     email,
-    status: ADMIN_STATUS.ACTIVE,
+    status: STATUS.ACTIVE,
   });
   if (exitingAdmin) {
     throw new Error("This user is already an admin");
   }
-
+  await validateRole(role);
   const exitingInvitation = await adminRepository.retrieveAdminRepo({
     email,
-    status: ADMIN_STATUS.INACTIVE,
+    status: STATUS.INACTIVE,
   });
 
   if (exitingInvitation) {
@@ -123,8 +128,8 @@ const addAdmin = async (email) => {
     name: name,
     password: hashedPassword,
     email,
-    role: ADMIN_ROLES.ADMIN,
-    status: ADMIN_STATUS.INACTIVE,
+    role: role,
+    status: STATUS.INACTIVE,
   });
 
   if (admin) {
@@ -156,8 +161,10 @@ const resetPassword = async (email, data) => {
 
   const newAdminData = await adminRepository.resetAdminDataRepo(email, {
     password: hashedPassword,
-    status: ADMIN_STATUS.ACTIVE || "active",
+    status: STATUS.ACTIVE || "active",
   });
+
+  await sendActivateEmail(email, admin.role);
 
   return newAdminData;
 };
@@ -178,10 +185,7 @@ const updateAdminData = async (id, data) => {
     throw new NotExistError("Admin not found");
   }
 
-  if (
-    admin.status === ADMIN_STATUS.INACTIVE &&
-    data.status !== ADMIN_STATUS.ACTIVE
-  ) {
+  if (admin.status === STATUS.INACTIVE && data.status !== STATUS.ACTIVE) {
     throw new Error("Admin is not active");
   }
 
@@ -205,12 +209,12 @@ const activateAdmin = async (id) => {
     throw new NotExistError("Admin not found");
   }
 
-  if (admin.status === ADMIN_STATUS.ACTIVE) {
+  if (admin.status === STATUS.ACTIVE) {
     throw new Error("Admin is already active");
   }
 
   const updatedAdmin = await adminRepository.updateAdminDataRepo(id, {
-    status: ADMIN_STATUS.ACTIVE,
+    status: STATUS.ACTIVE,
   });
   try {
     await sendActivateEmail(admin.email);
@@ -228,12 +232,12 @@ const deactivateAdmin = async (id) => {
     throw new NotExistError("Admin not found");
   }
 
-  if (admin.status === ADMIN_STATUS.INACTIVE) {
+  if (admin.status === STATUS.INACTIVE) {
     throw new Error("Admin is already inactive");
   }
 
   const updatedAdmin = await adminRepository.updateAdminDataRepo(id, {
-    status: ADMIN_STATUS.INACTIVE,
+    status: STATUS.INACTIVE,
   });
 
   try {
@@ -267,29 +271,13 @@ const changeRole = async (id, role) => {
   return updatedAdmin;
 };
 
-// const toggleAdminStatus = async (id, status) => {
-//   const admin = await adminRepository.retrieveAdminRepo({ _id: id });
-//   if (!admin) {
-//     throw new NotExistError("Admin not found");
-//   }
-
-//   if (status) validateStatus(status);
-
-//   if (admin.status === status) {
-//     throw new Error(`Admin is already ${status === ADMIN_STATUS.ACTIVE ? 'active' : 'inactive'}`);
-//   }
-
-//   const updatedAdmin = await adminRepository.updateAdminDataRepo(id,  status );
-//   return updatedAdmin;
-// };
-
 const deleteAdmin = async (id) => {
   const admin = await adminRepository.retrieveAdminRepo({ _id: id });
   if (!admin) {
     throw new NotExistError("Admin not found");
   }
 
-  if (admin.status === ADMIN_STATUS.INACTIVE) {
+  if (admin.status === STATUS.INACTIVE) {
     throw new Error("Admin is not active");
   }
 
@@ -342,7 +330,7 @@ const searchAdmins = async (filters) => {
 const forgotPassword = async (email) => {
   const admin = await adminRepository.retrieveAdminRepo({
     email,
-    status: ADMIN_STATUS.ACTIVE,
+    status: STATUS.ACTIVE,
   });
   if (!admin) {
     throw new NotExistError("Unable to find admin");
@@ -384,4 +372,3 @@ module.exports = {
   searchAdmins,
   forgotPassword,
 };
-//

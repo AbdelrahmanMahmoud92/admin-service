@@ -7,7 +7,7 @@ const { createSuperAdmin } = require("./actions");
 
 console.log('MONGO_URI:', process.env.MONGODB_URI); 
 
-const ADMIN_STATUS = require("../BusinessLayer/enums/admin-status");
+const STATUS = require("../BusinessLayer/enums/status");
 
 
 // tokens: the data after the command such as name, email, password, status, etc.
